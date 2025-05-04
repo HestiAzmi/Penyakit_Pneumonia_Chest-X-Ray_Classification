@@ -1,0 +1,1190 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rwLDx_Zu4j9s"
+      },
+      "source": [
+        "# **Library Importation and Setup**\n",
+        "\n",
+        "In this section, various Python libraries are imported to facilitate image processing, visualization, and deep learning tasks. Here's a brief explanation of the purpose of each library:\n",
+        "\n",
+        "    1. NumPy and Pandas: Essential for data manipulation and analysis.\n",
+        "    2. Matplotlib: Used for creating static, animated, and interactive visualizations.\n",
+        "    3. Plotly: Enables the creation of interactive visualizations.\n",
+        "    4. OpenCV (cv2): A computer vision library for image and video processing.\n",
+        "    5. Random: Provides functions for generating pseudo-random numbers.\n",
+        "    6. OS and Glob: Used for interacting with the operating system and file path handling.\n",
+        "    7. TQDM: A progress bar library to visualize the progress of tasks.\n",
+        "    8. Albumentations: A library for image augmentation, crucial for enhancing model generalization.\n",
+        "    9. TensorFlow: An open-source machine learning framework for developing and training deep learning models.\n",
+        "    10. Keras: A high-level neural networks API running on top of TensorFlow, simplifying model development.\n",
+        "    11. Scikit-Learn: Provides tools for machine learning tasks, such as model evaluation and data splitting.\n",
+        "    12. VGG16 (from Keras applications): A pre-trained deep learning model often used as a feature extractor.\n",
+        "    13. ImageDataGenerator (from Keras.preprocessing.image): A utility for real-time data augmentation during model training.\n",
+        "    14. ReduceLROnPlateau and EarlyStopping (from Keras.callbacks): Callbacks for adjusting learning rates and stopping training early based on certain conditions.\n",
+        "\n",
+        "\n",
+        "\n",
+        "This setup is crucial for efficiently handling data, developing deep learning models, and assessing model performance during training.\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:57:46.954276Z",
+          "iopub.status.busy": "2023-11-18T08:57:46.953825Z",
+          "iopub.status.idle": "2023-11-18T08:57:55.826544Z",
+          "shell.execute_reply": "2023-11-18T08:57:55.825542Z",
+          "shell.execute_reply.started": "2023-11-18T08:57:46.954171Z"
+        },
+        "id": "A_XsBYPX0c9z",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "import plotly\n",
+        "import plotly.express as px\n",
+        "import plotly.graph_objs as go\n",
+        "from plotly.offline import init_notebook_mode, plot, iplot\n",
+        "import cv2\n",
+        "import random\n",
+        "import os\n",
+        "import glob\n",
+        "from tqdm.notebook import tqdm\n",
+        "import albumentations as A\n",
+        "import tensorflow as tf\n",
+        "from tensorflow.keras.layers import Conv2D, Flatten, MaxPooling2D, Dense, Dropout , BatchNormalization\n",
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.preprocessing.image import ImageDataGenerator\n",
+        "from keras.applications.vgg16 import VGG16\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.metrics import classification_report,confusion_matrix\n",
+        "from keras.callbacks import ReduceLROnPlateau\n",
+        "from keras.layers import Input, Dense, add, Conv2D, MaxPool2D ,GlobalAveragePooling2D, Dropout, BatchNormalization\n",
+        "from keras.callbacks import EarlyStopping\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "opWX0u8W47gB"
+      },
+      "source": [
+        "# **Dataset Exploration and Categorization**\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Nac4y2bflHdw"
+      },
+      "source": [
+        "### Collecting Image Paths\n",
+        "\n",
+        "In this cell, the script uses the glob library to gather file paths for chest X-ray images in the training, testing, and validation sets. The number of images in each set is then counted and printed."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:57:55.828166Z",
+          "iopub.status.busy": "2023-11-18T08:57:55.827877Z",
+          "iopub.status.idle": "2023-11-18T08:57:56.680624Z",
+          "shell.execute_reply": "2023-11-18T08:57:56.679713Z",
+          "shell.execute_reply.started": "2023-11-18T08:57:55.828137Z"
+        },
+        "id": "9vCFy-Ef0c91",
+        "outputId": "323f94c4-0bac-4bae-c6ff-6466a7b3db60",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "train_data = glob.glob('/content/chest-xray-pneumonia/chest_xray/train/**/*.jpeg')\n",
+        "test_data = glob.glob('/content/chest-xray-pneumonia/chest_xray/test/**/*.jpeg')\n",
+        "val_data = glob.glob('/content/chest-xray-pneumonia/chest_xray/val/**/*.jpeg')\n",
+        "\n",
+        "print(f\"Training Set has {len(train_data)} images\")\n",
+        "print(f\"Testing Set has {len(test_data)} images\")\n",
+        "print(f\"Validation Set has {len(val_data)} images\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "iT9zZ1SYlPQL"
+      },
+      "source": [
+        "### Categorizing Images\n",
+        "\n",
+        "The code further categorizes images into \"NORMAL\" and \"PNEUMONIA\" classes, providing an overview of the distribution of these classes within the dataset. This initial exploration is essential for understanding the dataset composition before subsequent analysis or model development."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:57:56.682923Z",
+          "iopub.status.busy": "2023-11-18T08:57:56.682533Z",
+          "iopub.status.idle": "2023-11-18T08:57:56.717373Z",
+          "shell.execute_reply": "2023-11-18T08:57:56.716548Z",
+          "shell.execute_reply.started": "2023-11-18T08:57:56.682881Z"
+        },
+        "id": "iA8bXHbn0c92",
+        "outputId": "bb3a1655-45ad-4600-d9a7-e9b2552a4740",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "DIR = \"/content/chest-xray-pneumonia/chest_xray/chest_xray\"\n",
+        "sets = [\"train\", \"test\", \"val\"]\n",
+        "all_pneumonia = []\n",
+        "all_normal = []\n",
+        "\n",
+        "for cat in sets:\n",
+        "    path = os.path.join(DIR, cat)\n",
+        "    norm = glob.glob(os.path.join(path, \"NORMAL/*.jpeg\"))\n",
+        "    pneu = glob.glob(os.path.join(path, \"PNEUMONIA/*.jpeg\"))\n",
+        "    all_normal.extend(norm)\n",
+        "    all_pneumonia.extend(pneu)\n",
+        "\n",
+        "print(f\"Total Pneumonia Images: {len(all_pneumonia)}\")\n",
+        "print(f\"Total Normal Images: {len(all_normal)}\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bPUw-Set0c93"
+      },
+      "source": [
+        "# **Basic Data Exploration :**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "wolg2ZHmHFCB"
+      },
+      "source": [
+        "### Class Distribution Pie Chart\n",
+        "\n",
+        "This section uses a pie chart to visualize the distribution of classes in the dataset. The dataset seems to consist of two classes: \"Normal\" and \"Pneumonia.\" The chart provides a quick overview of the proportion of each class in the dataset."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 542
+        },
+        "id": "sEPh9bGXnKzn",
+        "outputId": "b6c7e24d-bf06-48f1-9ba6-e8ab925ef5c2"
+      },
+      "outputs": [],
+      "source": [
+        "labels = [\"Normal\", \"Pneumonia\"]\n",
+        "values = [len(all_normal), len(all_pneumonia)]\n",
+        "colors = ['#42c8f6', '#f2ba0c']\n",
+        "\n",
+        "fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.5)])\n",
+        "\n",
+        "fig.update_traces(\n",
+        "    hoverinfo='value',\n",
+        "    textinfo='label+percent',\n",
+        "    textfont_size=20,\n",
+        "    marker=dict(colors=colors, line=dict(color='#000000', width=3))\n",
+        ")\n",
+        "\n",
+        "fig.update_layout(\n",
+        "    title=\"Image Category Distribution\",\n",
+        "    titlefont={'size': 30},\n",
+        "    title_x=0.5,\n",
+        "    title_y=0.95,\n",
+        ")\n",
+        "\n",
+        "iplot(fig)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BaNm2s-40c95"
+      },
+      "source": [
+        "### Shuffling Images Randomly\n",
+        "\n",
+        "Here, the code shuffles the lists of images for both \"Normal\" and \"Pneumonia\" classes randomly. This is often done to ensure a balanced distribution of classes during training and testing."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:57:57.569139Z",
+          "iopub.status.busy": "2023-11-18T08:57:57.568763Z",
+          "iopub.status.idle": "2023-11-18T08:57:57.580531Z",
+          "shell.execute_reply": "2023-11-18T08:57:57.579677Z",
+          "shell.execute_reply.started": "2023-11-18T08:57:57.569101Z"
+        },
+        "id": "s_exa2TO0c96",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "random.shuffle(all_normal)\n",
+        "random.shuffle(all_pneumonia)\n",
+        "images = all_normal[:50] + all_pneumonia[:50]"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ZmU4bhll0c97"
+      },
+      "source": [
+        "### Viewing Images of X-ray\n",
+        "\n",
+        "In This cell, displays a grid of X-ray images. It selects a subset of images from both classes and visualizes them in a 4x4 grid. This step is useful for getting a visual understanding of the dataset."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 807
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:57:57.582126Z",
+          "iopub.status.busy": "2023-11-18T08:57:57.581773Z",
+          "iopub.status.idle": "2023-11-18T08:57:59.448179Z",
+          "shell.execute_reply": "2023-11-18T08:57:59.447373Z",
+          "shell.execute_reply.started": "2023-11-18T08:57:57.582089Z"
+        },
+        "id": "VeAhy-8A0c98",
+        "outputId": "7c95972f-6f1c-4306-c640-1bf61f8a921c",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "fig=plt.figure(figsize=(15, 10))\n",
+        "columns = 4; rows = 4\n",
+        "for i in range(1, columns*rows +1):\n",
+        "    img = cv2.imread(images[i])\n",
+        "    img = cv2.resize(img, (1024, 1024))\n",
+        "    fig.add_subplot(rows, columns, i)\n",
+        "    plt.imshow(img)\n",
+        "    plt.axis(False)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "R7NxIXRM0c9-"
+      },
+      "source": [
+        "### Converting Images to Greyscale and Applying Gaussian Blur\n",
+        "\n",
+        "In this section, the code converts the images to greyscale and applies a Gaussian blur. The resulting images represent the magnitude spectrum, providing insights into the areas with the majority of growth."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 807
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:57:59.449997Z",
+          "iopub.status.busy": "2023-11-18T08:57:59.449644Z",
+          "iopub.status.idle": "2023-11-18T08:58:04.516138Z",
+          "shell.execute_reply": "2023-11-18T08:58:04.515248Z",
+          "shell.execute_reply.started": "2023-11-18T08:57:59.449953Z"
+        },
+        "id": "dLLI7FN80c9-",
+        "outputId": "e860d97b-5f3d-4df9-86a0-25456e69bdb6",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "fig=plt.figure(figsize=(15, 10))\n",
+        "columns = 4; rows = 4\n",
+        "for i in range(1, columns*rows +1):\n",
+        "    img = cv2.imread(images[i])\n",
+        "    img = cv2.resize(img, (1024, 1024))\n",
+        "    img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)\n",
+        "    img = cv2.addWeighted (img, 4, cv2.GaussianBlur(img, (0,0), 512/10), -4, 128)\n",
+        "    fig.add_subplot(rows, columns, i)\n",
+        "    plt.imshow(img)\n",
+        "    plt.axis(False)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Vvh-CI410c-C"
+      },
+      "source": [
+        " All these images might look like a bunch of green dots on a blue background, but that’s not all. These images are basically magnitude spectrum which tells us where the majority of the growth is.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Bba4vrFN0c-C"
+      },
+      "source": [
+        "### Image Erosion\n",
+        "\n",
+        "Erosion is a morphological operation that shrinks the boundaries of bright regions in an image. This code applies image erosion to a subset of images, highlighting the effect of this operation on the X-ray images.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 807
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:05.648521Z",
+          "iopub.status.busy": "2023-11-18T08:58:05.648239Z",
+          "iopub.status.idle": "2023-11-18T08:58:07.012970Z",
+          "shell.execute_reply": "2023-11-18T08:58:07.012106Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:05.648491Z"
+        },
+        "id": "B18KGIR_0c-D",
+        "outputId": "534135a6-0431-4bda-fecb-53b657ce1fa2",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "fig=plt.figure(figsize=(15, 10))\n",
+        "columns = 4; rows = 4\n",
+        "for i in range(1, columns*rows +1):\n",
+        "    img = cv2.imread(images[i])\n",
+        "    img = cv2.resize(img, (1024, 1024))\n",
+        "    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)\n",
+        "    kernel = np.ones((5, 5), np.uint8)\n",
+        "    img_erosion = cv2.erode(img, kernel, iterations=3)\n",
+        "    fig.add_subplot(rows, columns, i)\n",
+        "    plt.imshow(img_erosion)\n",
+        "    plt.axis(False)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "q_QE5dwx0c-D"
+      },
+      "source": [
+        "### Dilation of Images\n",
+        "\n",
+        "Dilation is a morphological operation that expands the boundaries of bright regions in an image. Similar to erosion, this code applies image dilation to a subset of images, showcasing the impact of dilation on X-ray images.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 807
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:07.014398Z",
+          "iopub.status.busy": "2023-11-18T08:58:07.014096Z",
+          "iopub.status.idle": "2023-11-18T08:58:08.103566Z",
+          "shell.execute_reply": "2023-11-18T08:58:08.102664Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:07.014367Z"
+        },
+        "id": "x0QFO6H70c-E",
+        "outputId": "12f6956c-8c2d-4cab-c01c-5b1cfbbf7514",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "fig=plt.figure(figsize=(15, 10))\n",
+        "columns = 4; rows = 4\n",
+        "for i in range(1, columns*rows +1):\n",
+        "    img = cv2.imread(images[i])\n",
+        "    img = cv2.resize(img, (1024, 1024))\n",
+        "    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)\n",
+        "    kernel = np.ones((5, 5), np.uint8)\n",
+        "    img_erosion = cv2.dilate(img, kernel, iterations=3)\n",
+        "    fig.add_subplot(rows, columns, i)\n",
+        "    plt.imshow(img_erosion)\n",
+        "    plt.axis(False)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "EMFNMcTdJ75v"
+      },
+      "source": [
+        "### Edge Detection\n",
+        "\n",
+        "Edge detection using the Canny algorithm is applied to a subset of images. This process highlights the edges and boundaries within the images, providing information about structural features."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 807
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:08.105326Z",
+          "iopub.status.busy": "2023-11-18T08:58:08.104929Z",
+          "iopub.status.idle": "2023-11-18T08:58:09.201344Z",
+          "shell.execute_reply": "2023-11-18T08:58:09.200485Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:08.105276Z"
+        },
+        "id": "ZXKx4orX0c-G",
+        "outputId": "0c618d59-50bb-4319-92d5-7224516ef28f",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "fig=plt.figure(figsize=(15, 10))\n",
+        "columns = 4; rows = 4\n",
+        "for i in range(1, columns*rows +1):\n",
+        "    img = cv2.imread(images[i])\n",
+        "    img = cv2.resize(img, (512, 512))\n",
+        "    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n",
+        "    edges = cv2.Canny(img, 80, 100)\n",
+        "    fig.add_subplot(rows, columns, i)\n",
+        "    plt.imshow(edges)\n",
+        "    plt.axis(False)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Vd8M50LPI034"
+      },
+      "source": [
+        "### Image Data Generators\n",
+        "\n",
+        "In this cell, ImageDataGenerators are set up for training and validation. These generators are crucial in deep learning workflows for augmenting and preprocessing image data. They perform operations like rotation, shifting, shearing, zooming, and horizontal flipping to increase the diversity of the training dataset, which can enhance model generalization.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:09.202701Z",
+          "iopub.status.busy": "2023-11-18T08:58:09.202421Z",
+          "iopub.status.idle": "2023-11-18T08:58:09.207782Z",
+          "shell.execute_reply": "2023-11-18T08:58:09.206811Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:09.202672Z"
+        },
+        "id": "CD2fpySd0c-G",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "train_gen = ImageDataGenerator(\n",
+        "    rescale=1./255,\n",
+        "    rotation_range=20,\n",
+        "    width_shift_range=0.2,\n",
+        "    height_shift_range=0.2,\n",
+        "    shear_range=0.2,\n",
+        "    zoom_range=0.2,\n",
+        "    horizontal_flip=True,\n",
+        "    fill_mode='nearest'\n",
+        ")\n",
+        "\n",
+        "val_gen = ImageDataGenerator(\n",
+        "    rescale=1./255\n",
+        ")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bw8y3mCtIqYW"
+      },
+      "source": [
+        "### Data Generators for Training and Validation\n",
+        "\n",
+        "In this cell, the code creates data generators using the flow_from_directory method. These generators are designed to work with image datasets. The training data generator (Train) is set up to flow batches of images from the training directory, applying the transformations defined earlier. The validation data generator (val) similarly flows batches from the validation directory, but without the data augmentation transformations, only rescaling the pixel values. These generators are then used for training a deep learning model on the chest X-ray dataset.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:09.209486Z",
+          "iopub.status.busy": "2023-11-18T08:58:09.209117Z",
+          "iopub.status.idle": "2023-11-18T08:58:13.159496Z",
+          "shell.execute_reply": "2023-11-18T08:58:13.158519Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:09.209448Z"
+        },
+        "id": "0GIcDexe0c-G",
+        "outputId": "8d0c75c7-2566-43b5-de04-6bb9536264b5",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "# Training data generator flow_from_directory\n",
+        "Train = train_gen.flow_from_directory(\n",
+        "    \"/content/chest-xray-pneumonia/chest_xray/train\",\n",
+        "    batch_size=16,\n",
+        "    target_size=(224, 224)\n",
+        ")\n",
+        "\n",
+        "# Validation data generator flow_from_directory\n",
+        "val = val_gen.flow_from_directory(\n",
+        "    \"/content/chest-xray-pneumonia/chest_xray/test\",\n",
+        "    batch_size=8,\n",
+        "    target_size=(224, 224)\n",
+        ")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-iEkPvQ5KlIA"
+      },
+      "source": [
+        "# **Model 1**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "k9XheRL9cYEi"
+      },
+      "source": [
+        "### Model 1 Definition and Compilation\n",
+        "\n",
+        "In this cell, a neural network model named Model_1 is defined using the Sequential API from Keras, a high-level neural networks API running on top of TensorFlow. The model consists of a flattening layer to reshape the input into a one-dimensional array, followed by a dense layer with 128 neurons and ReLU activation. The final layer is a dense layer with two neurons using softmax activation, indicating binary classification. The model is then compiled with the Adam optimizer, categorical crossentropy loss function, and accuracy as the evaluation metric."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:13.160960Z",
+          "iopub.status.busy": "2023-11-18T08:58:13.160691Z",
+          "iopub.status.idle": "2023-11-18T08:58:15.330454Z",
+          "shell.execute_reply": "2023-11-18T08:58:15.329571Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:13.160934Z"
+        },
+        "id": "wHzcSSNj0c-H",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "import tensorflow as tf\n",
+        "from tensorflow.keras import layers, models\n",
+        "\n",
+        "Model_1 = models.Sequential()\n",
+        "\n",
+        "Model_1.add(layers.Flatten(input_shape=(224, 224,3)))\n",
+        "\n",
+        "Model_1.add(layers.Dense(128, activation='relu'))\n",
+        "\n",
+        "Model_1.add(layers.Dense(2, activation='softmax'))  # Binary classification\n",
+        "\n",
+        "Model_1.compile(optimizer='adam',\n",
+        "                loss='categorical_crossentropy',\n",
+        "                metrics=['accuracy'])\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "QHK0XZ7IODtt"
+      },
+      "source": [
+        "### Model 1 Summary\n",
+        "\n",
+        "The summary() method is called to display a concise summary of the model architecture, showing the layers, output shapes, and the number of parameters in each layer."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "o5-u_ZvbOCMe",
+        "outputId": "41ac5d26-f27d-4663-c6d7-70f951101625"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "Model_1.summary()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vf2bOEHLRZyR"
+      },
+      "source": [
+        "### Training the Model 1\n",
+        "\n",
+        "The model is trained using the fit method on the training data (Train). The training process is monitored for the validation accuracy (val_acc), and training is stopped early if there is no improvement after 4 epochs (patience=4). The restore_best_weights parameter ensures that the model weights are restored to the ones with the best validation accuracy."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T08:58:15.332235Z",
+          "iopub.status.busy": "2023-11-18T08:58:15.331867Z",
+          "iopub.status.idle": "2023-11-18T09:02:09.829245Z",
+          "shell.execute_reply": "2023-11-18T09:02:09.828481Z",
+          "shell.execute_reply.started": "2023-11-18T08:58:15.332204Z"
+        },
+        "id": "8L2Ur37f0c-H",
+        "outputId": "cafa09e6-ed2e-4462-9767-9495414c187d",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "from tensorflow.keras.callbacks import EarlyStopping\n",
+        "\n",
+        "early_stopping_callback = EarlyStopping(monitor='val_acc', patience=4, restore_best_weights=True)\n",
+        "\n",
+        "# Train the model with callbacks\n",
+        "history_Model_1 = Model_1.fit(\n",
+        "    Train,\n",
+        "    epochs=10,\n",
+        "    steps_per_epoch=50,\n",
+        "    validation_data=val,\n",
+        "    callbacks=[early_stopping_callback]\n",
+        ")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Q2xzab8bOUmE"
+      },
+      "source": [
+        "\n",
+        "### Plotting Model 1 Performance\n",
+        "\n",
+        "Matplotlib is used to plot the training and validation accuracy as well as the training and validation loss over epochs. The plots help visualize how well the model is learning from the training data and generalizing to the validation data. The 'accuracy' plot shows the accuracy of the model on the training and validation sets, while the 'loss' plot shows the corresponding categorical crossentropy loss values.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:02:09.830831Z",
+          "iopub.status.busy": "2023-11-18T09:02:09.830544Z",
+          "iopub.status.idle": "2023-11-18T09:02:10.177919Z",
+          "shell.execute_reply": "2023-11-18T09:02:10.176967Z",
+          "shell.execute_reply.started": "2023-11-18T09:02:09.830784Z"
+        },
+        "id": "BGjOJQSb0c-I",
+        "outputId": "68c41a44-07d7-43b9-b648-74a3cb4c4b54",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "plt.figure(figsize=(8,6))\n",
+        "plt.title('Accuracy scores Model 1')\n",
+        "plt.plot(history_Model_1.history['accuracy'],'go-')\n",
+        "plt.plot(history_Model_1.history['val_accuracy'],'ro-')\n",
+        "plt.legend(['accuracy', 'val_accuracy'])\n",
+        "plt.show()\n",
+        "plt.figure(figsize=(8,6))\n",
+        "plt.title('Loss value Model 1')\n",
+        "plt.plot(history_Model_1.history['loss'],'go-')\n",
+        "plt.plot(history_Model_1.history['val_loss'],'ro-')\n",
+        "plt.legend(['loss', 'val_loss'])\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jE10ZG-PNZSB"
+      },
+      "source": [
+        "# **Model 2**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HZdaVhe8aHHV"
+      },
+      "source": [
+        "### Model 2 Architecture\n",
+        "In this cell,code defines the architecture of a Convolutional Neural Network (CNN)using the Keras Sequential API. The model comprises three convolutional layers, each followed by a max-pooling layer to extract hierarchical features from the input images. The Flatten layer is used to transform the 3D output into a 1D array before passing it through fully connected (Dense) layers. The final layer outputs probabilities for binary classification using the softmax activation function."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:02:10.179293Z",
+          "iopub.status.busy": "2023-11-18T09:02:10.179019Z",
+          "iopub.status.idle": "2023-11-18T09:02:10.259641Z",
+          "shell.execute_reply": "2023-11-18T09:02:10.258832Z",
+          "shell.execute_reply.started": "2023-11-18T09:02:10.179266Z"
+        },
+        "id": "XiiEGFNW0c-I",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "Model_2 = Sequential()\n",
+        "Model_2.add(Conv2D(32,(3,3),strides=(1, 1),activation='relu',padding='same', input_shape=(224, 224, 3)))\n",
+        "Model_2.add(MaxPooling2D(pool_size=(2,2)))\n",
+        "Model_2.add(Conv2D(64,(3,3),strides=(1, 1) ,padding='same',activation='relu'))\n",
+        "Model_2.add(MaxPooling2D(pool_size=(2,2)))\n",
+        "Model_2.add(Conv2D(128,(3,3),strides=(1, 1),padding='same', activation='relu'))\n",
+        "Model_2.add(MaxPooling2D(pool_size=(2,2)))\n",
+        "Model_2.add(Flatten())\n",
+        "\n",
+        "Model_2.add(Dense(128, activation='relu'))\n",
+        "Model_2.add(Dense(64, activation='relu'))\n",
+        "Model_2.add(Dense(2, activation='softmax'))\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "SbzSUxQcOpi4"
+      },
+      "source": [
+        "### Model 2 Summary\n",
+        "\n",
+        "In this cell displays a summary of the model, providing details about the layers, output shapes, and parameters. This summary helps in understanding the overall structure of the neural network."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "nOCG_8bhOgpH",
+        "outputId": "f269ec40-ed48-42c5-fb64-80943e47eb42"
+      },
+      "outputs": [],
+      "source": [
+        "Model_2.summary()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "sYmEQHh-NN30"
+      },
+      "source": [
+        "### Model 2 Compilation\n",
+        "\n",
+        "In this cell, the model is compiled using the Adam optimizer, categorical crossentropy loss (suitable for multi-class classification), and accuracy as the evaluation metric. Compilation is a necessary step before training the model."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:02:10.260971Z",
+          "iopub.status.busy": "2023-11-18T09:02:10.260662Z",
+          "iopub.status.idle": "2023-11-18T09:02:10.272072Z",
+          "shell.execute_reply": "2023-11-18T09:02:10.271271Z",
+          "shell.execute_reply.started": "2023-11-18T09:02:10.260941Z"
+        },
+        "id": "W5Dc3zDU0c-J",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "Model_2.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ecFCh1RA0c-J"
+      },
+      "source": [
+        "\n",
+        "### Model 2 Training\n",
+        "\n",
+        "In this cell trains the model using the fit_generator method, which is suitable for handling data generators. The training process is monitored by an early stopping callback, which halts training if there is no improvement in validation loss after a certain number of epochs, restoring the best weights.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "_kg_hide-output": true,
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:03:36.563608Z",
+          "iopub.status.busy": "2023-11-18T09:03:36.563229Z",
+          "iopub.status.idle": "2023-11-18T09:07:19.019680Z",
+          "shell.execute_reply": "2023-11-18T09:07:19.018769Z",
+          "shell.execute_reply.started": "2023-11-18T09:03:36.563572Z"
+        },
+        "id": "pwVOfXsA0c-J",
+        "outputId": "ba0b44f8-f59e-4fc0-a574-82d5961277f2",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "early_stopping_cb = tf.keras.callbacks.EarlyStopping(patience=5,restore_best_weights=True)\n",
+        "\n",
+        "history_Model_2 = Model_2.fit(Train,epochs=10,validation_data=val,steps_per_epoch=50,callbacks=[early_stopping_cb])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8G-yRTYP0c-J"
+      },
+      "source": [
+        "\n",
+        "### Plotting Performance\n",
+        "\n",
+        "In this cell, utilizes Matplotlib to create two plots.\n",
+        "The first plot illustrates the training and validation accuracy over epochs, helping visualize how well the model is learning.\n",
+        "The second plot shows the training and validation loss, providing insights into the convergence and generalization performance of the model.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:15:43.072757Z",
+          "iopub.status.busy": "2023-11-18T09:15:43.072333Z",
+          "iopub.status.idle": "2023-11-18T09:15:43.390736Z",
+          "shell.execute_reply": "2023-11-18T09:15:43.389890Z",
+          "shell.execute_reply.started": "2023-11-18T09:15:43.072720Z"
+        },
+        "id": "zCAtcqAw0c-J",
+        "outputId": "95423d51-f666-4755-cc6b-08b3fb54c7a9",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "plt.figure(figsize=(8,6))\n",
+        "plt.title('Accuracy scores Model 2')\n",
+        "plt.plot(history_Model_2.history['accuracy'],'go-')\n",
+        "plt.plot(history_Model_2.history['val_accuracy'],'ro-')\n",
+        "plt.legend(['accuracy', 'val_accuracy'])\n",
+        "plt.show()\n",
+        "plt.figure(figsize=(8,6))\n",
+        "plt.title('Loss value Model 2')\n",
+        "plt.plot(history_Model_2 .history['loss'],'go-')\n",
+        "plt.plot(history_Model_2 .history['val_loss'],'ro-')\n",
+        "plt.legend(['loss', 'val_loss'])\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JGyrKcbeNhPn"
+      },
+      "source": [
+        "# **Model 3**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "FPIAhyungvqo"
+      },
+      "source": [
+        "### Model 3 Architecture Definition\n",
+        "\n",
+        "In this cell, code defines a convolutional neural network (CNN) architecture using the Keras library. It consists of convolutional layers, max-pooling layers, batch normalization, a residual block, global average pooling, dense (fully connected) layers, and dropout for regularization. The final output layer has two units with softmax activation, indicating a binary classification task.\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:24:23.742438Z",
+          "iopub.status.busy": "2023-11-18T09:24:23.742094Z",
+          "iopub.status.idle": "2023-11-18T09:24:23.828583Z",
+          "shell.execute_reply": "2023-11-18T09:24:23.827609Z",
+          "shell.execute_reply.started": "2023-11-18T09:24:23.742407Z"
+        },
+        "id": "f3VrqHnP0c-K",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "from keras.layers import Input, Conv2D, MaxPool2D, BatchNormalization, add, GlobalAveragePooling2D, Dense, Dropout\n",
+        "from keras.models import Model\n",
+        "\n",
+        "inputs = Input(shape=(224, 224, 3))\n",
+        "\n",
+        "x = Conv2D(32, (3, 3), activation='elu')(inputs)\n",
+        "x = Conv2D(64, (3, 3), activation='elu')(x)\n",
+        "block_1_output = MaxPool2D(pool_size=(3, 3))(x)\n",
+        "\n",
+        "x = Conv2D(64, (3, 3), activation='elu', padding='same')(block_1_output)\n",
+        "x = BatchNormalization()(x)\n",
+        "x = Conv2D(64, (3, 3), activation='elu', padding='same')(x)\n",
+        "block_2_output = add([x, block_1_output])\n",
+        "\n",
+        "x = Conv2D(128, (3, 3), activation='elu')(block_2_output)\n",
+        "x = MaxPool2D(pool_size=(2, 2))(x)\n",
+        "x = GlobalAveragePooling2D()(x)\n",
+        "x = Dense(256, activation='elu')(x)\n",
+        "x = Dropout(0.4)(x)\n",
+        "output = Dense(2, activation='softmax')(x)\n",
+        "\n",
+        "model = Model(inputs=inputs, outputs=output)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:24:24.090007Z",
+          "iopub.status.busy": "2023-11-18T09:24:24.089641Z",
+          "iopub.status.idle": "2023-11-18T09:24:24.098070Z",
+          "shell.execute_reply": "2023-11-18T09:24:24.097146Z",
+          "shell.execute_reply.started": "2023-11-18T09:24:24.089977Z"
+        },
+        "id": "8uVXcGr40c-K",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "Model_3 = Model(inputs, output)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CrW6HZPFhFg_"
+      },
+      "source": [
+        "### Model 3 Complilation\n",
+        "This section compiles the model. The Adam optimizer is used with a learning rate of 0.001, categorical crossentropy is chosen as the loss function (commonly used for multi-class classification tasks), and accuracy is selected as the evaluation metric."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:26:51.729819Z",
+          "iopub.status.busy": "2023-11-18T09:26:51.729467Z",
+          "iopub.status.idle": "2023-11-18T09:26:51.742298Z",
+          "shell.execute_reply": "2023-11-18T09:26:51.741472Z",
+          "shell.execute_reply.started": "2023-11-18T09:26:51.729783Z"
+        },
+        "id": "TqWKXbHP0c-L",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "from keras.optimizers import Adam\n",
+        "Model_3.compile(optimizer=Adam(learning_rate=0.001), loss='categorical_crossentropy', metrics=['accuracy'])\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KoZ6zqgyhXUY"
+      },
+      "source": [
+        "### Model 3 Summary\n",
+        "In this line prints a summary of the model architecture, including the layer names, types, and parameter counts."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:26:52.025484Z",
+          "iopub.status.busy": "2023-11-18T09:26:52.025230Z",
+          "iopub.status.idle": "2023-11-18T09:26:52.037754Z",
+          "shell.execute_reply": "2023-11-18T09:26:52.036972Z",
+          "shell.execute_reply.started": "2023-11-18T09:26:52.025459Z"
+        },
+        "id": "7CJDV20l0c-L",
+        "outputId": "8fa712bb-541e-4b46-8aef-01de7ca6a991",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "Model_3.summary()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PyYCWlYthpBe"
+      },
+      "source": [
+        "### Model 3 Training\n",
+        "In this cell ,The model is trained using the fit method. The training data (Train) and validation data (val) are provided. The training is performed for 10 epochs with early stopping specified by the early_stopping_cb callback to prevent overfitting. The steps_per_epoch parameter defines the number of batches processed in each epoch."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:26:52.403488Z",
+          "iopub.status.busy": "2023-11-18T09:26:52.403134Z",
+          "iopub.status.idle": "2023-11-18T09:29:39.442557Z",
+          "shell.execute_reply": "2023-11-18T09:29:39.441810Z",
+          "shell.execute_reply.started": "2023-11-18T09:26:52.403458Z"
+        },
+        "id": "V1o2msG40c-L",
+        "outputId": "26cec9a5-53b6-484a-b1c5-fc016a6fc5d5",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "early_stopping_callback = EarlyStopping(monitor='val_acc', patience=4, restore_best_weights=True)\n",
+        "history_Model_3 = Model_3.fit(Train,epochs=10,validation_data=val,steps_per_epoch=50,callbacks=[early_stopping_callback])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "XUbybUCth0zd"
+      },
+      "source": [
+        "### Plotting Model 3\n",
+        "These plots visualize the training history of the model. The first plot shows the accuracy and validation accuracy over epochs, while the second plot shows the training loss and validation loss over epochs. These visualizations help in assessing the model's performance and identifying potential issues such as overfitting or underfitting."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "execution": {
+          "iopub.execute_input": "2023-11-18T09:30:52.610761Z",
+          "iopub.status.busy": "2023-11-18T09:30:52.610496Z",
+          "iopub.status.idle": "2023-11-18T09:30:52.937926Z",
+          "shell.execute_reply": "2023-11-18T09:30:52.937088Z",
+          "shell.execute_reply.started": "2023-11-18T09:30:52.610736Z"
+        },
+        "id": "FImOsTXm0c-L",
+        "outputId": "cd5cd917-9ed4-4295-83a5-9bcb6907195b",
+        "trusted": true
+      },
+      "outputs": [],
+      "source": [
+        "plt.figure(figsize=(8,6))\n",
+        "plt.title('Accuracy scores Model 3')\n",
+        "plt.plot(history_Model_3.history['accuracy'],'go-')\n",
+        "plt.plot(history_Model_3.history['val_accuracy'],'ro-')\n",
+        "plt.legend(['accuracy', 'val_accuracy'])\n",
+        "plt.show()\n",
+        "plt.figure(figsize=(8,6))\n",
+        "plt.title('Loss value Model 3')\n",
+        "plt.plot(history_Model_3.history['loss'],'go-')\n",
+        "plt.plot(history_Model_3.history['val_loss'],'ro-')\n",
+        "plt.legend(['loss', 'val_loss'])\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_luMWUmRiWeQ"
+      },
+      "source": [
+        "# Conclusion\n",
+        "\n",
+        "Three different models were implemented and evaluated for a binary image classification task on chest X-ray data. Model 1 is a simple neural network, Model 2 is a convolutional neural network, and Model 3 is a more complex CNN with residual connections. Training histories and performance metrics were visualized for each model. Further analysis and comparison of the models' performance could provide insights into their effectiveness for the given classification task."
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "toc_visible": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
